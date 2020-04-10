@@ -10,7 +10,12 @@ app.get('/messages', (req, res)=> {
     .then(data => {
         let msgs = []
         data.forEach(doc => {
-            msgs.push(doc.data())
+            msgs.push({
+                messageId: doc.id,
+                body: doc.data().body,
+                userHandle: doc.data().userHandle,
+                createdAt: doc.data().createdAt
+            })
         })
         return res.json(msgs)
     })
@@ -20,7 +25,7 @@ app.get('/messages', (req, res)=> {
 exports.api = functions.https.onRequest(app)
 
 
-exports.createMsg = functions.https.onRequest((req,res)=> {
+app.post(`/message`,(req,res) => {
     if(req.method !== 'POST'){
         return res.status(400).json({error: `Method not allowed`})
     }
