@@ -19,9 +19,11 @@ const firebaseConfig = {
 const firebase = require('firebase')
 firebase.initializeApp(firebaseConfig)
 
+const db = admin.firestore()
+
 //retrieve messages
 app.get('/messages', (req, res)=> {
-    admin.firestore().collection('messages')
+    db.collection('messages')
     .orderBy('createdAt', 'desc')
     .get()
     .then(data => {
@@ -51,7 +53,7 @@ app.post(`/message`,(req,res) => {
         userHandle: req.body.userHandle,
         createdAt:  new Date().toISOString()
     }
-    admin.firestore()
+    db
     .collection('messages')
     .add(newMsg)
     .then(doc => {
@@ -71,12 +73,25 @@ app.post(`/signup`, (req, res)=> {
         confirmPassword: req.body.confirmPassword,
         Handle: req.body.Handle
     }
-    firebase.auth().createUserWithEmailAndPassword(newUser.email, newUser.password)
+    //validate data
+    db.doc(`/users/${newUser.handle}`).get()
+    .then(doc => {
+        if(doc.exists){
+            return res.status(400).json({handle: `this handle is already taken`})
+        } else{
+            return firebase
+                .auth()
+                .createUserWithEmailAndPassword(newUser.email, newUser.password)
+        }
+    })
     .then(data => {
-        return res.status(201).json({message: `user ${data.user.uid} signed up successfully`})
+        return data.user.getIdToken()
+    })
+    .then(token => {
+        return res.json(201).json({token})
     })
     .catch(err => {
         console.error(err)
-        return res.status(500).json({error: err.code})
+        return res.stauts(500).json({error: err.code})
     })
 })
