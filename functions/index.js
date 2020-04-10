@@ -1,9 +1,25 @@
 const functions = require('firebase-functions');
 const admin = require('firebase-admin')
-const express = require('express')
-const app = express()
+const app = require('express')()
+
 admin.initializeApp()
 
+const firebaseConfig = {
+    apiKey: "AIzaSyAm1KJaXYGKk2tIFwSAGYoYD9jHxf3bcfs",
+    authDomain: "gabriel-adfe2.firebaseapp.com",
+    databaseURL: "https://gabriel-adfe2.firebaseio.com",
+    projectId: "gabriel-adfe2",
+    storageBucket: "gabriel-adfe2.appspot.com",
+    messagingSenderId: "808985783099",
+    appId: "1:808985783099:web:ccbde829b0de00592b251e",
+    measurementId: "G-FGHQXHMDV4"
+};
+
+
+const firebase = require('firebase')
+firebase.initializeApp(firebaseConfig)
+
+//retrieve messages
 app.get('/messages', (req, res)=> {
     admin.firestore().collection('messages')
     .orderBy('createdAt', 'desc')
@@ -25,7 +41,7 @@ app.get('/messages', (req, res)=> {
 
 exports.api = functions.https.onRequest(app)
 
-
+//create message
 app.post(`/message`,(req,res) => {
     if(req.method !== 'POST'){
         return res.status(400).json({error: `Method not allowed`})
@@ -44,5 +60,23 @@ app.post(`/message`,(req,res) => {
     .catch(err => {
         res.status(500).json({error: `Something went wrong`})
         console.error(err)
+    })
+})
+
+//signup route
+app.post(`/signup`, (req, res)=> {
+    const newUser = {
+        email: req.body.email,
+        password: req.body.password,
+        confirmPassword: req.body.confirmPassword,
+        Handle: req.body.Handle
+    }
+    firebase.auth().createUserWithEmailAndPassword(newUser.email, newUser.password)
+    .then(data => {
+        return res.status(201).json({message: `user ${data.user.uid} signed up successfully`})
+    })
+    .catch(err => {
+        console.error(err)
+        return res.status(500).json({error: err.code})
     })
 })
