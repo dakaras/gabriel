@@ -1,18 +1,15 @@
 const functions = require('firebase-functions');
 const admin = require('firebase-admin')
-
+const express = require('express')
+const app = express()
 admin.initializeApp()
 
-exports.helloWorld = functions.https.onRequest((request, response) => {
- response.send("Hello World!");
-});
-
-exports.getMessages = functions.https.onRequest((req, res)=> {
+app.get('/messages', (req, res)=> {
     admin.firestore().collection('messages')
     .get()
     .then(data => {
         let msgs = []
-        data.forEach(doc =>{
+        data.forEach(doc => {
             msgs.push(doc.data())
         })
         return res.json(msgs)
@@ -20,7 +17,13 @@ exports.getMessages = functions.https.onRequest((req, res)=> {
     .catch(err => console.error(err))
 })
 
+exports.api = functions.https.onRequest(app)
+
+
 exports.createMsg = functions.https.onRequest((req,res)=> {
+    if(req.method !== 'POST'){
+        return res.status(400).json({error: `Method not allowed`})
+    }
     const newMsg = {
         body: req.body.body,
         userHandle: req.body.userHandle,
@@ -33,7 +36,7 @@ exports.createMsg = functions.https.onRequest((req,res)=> {
         return res.json({message: `document ${doc.id} created successfully`})
     })
     .catch(err => {
-        res.status(500).json({error: `something went wrong`})
+        res.status(500).json({error: `Something went wrong`})
         console.error(err)
     })
 })
