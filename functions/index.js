@@ -6,6 +6,7 @@ admin.initializeApp()
 
 app.get('/messages', (req, res)=> {
     admin.firestore().collection('messages')
+    .orderBy('createdAt', 'desc')
     .get()
     .then(data => {
         let msgs = []
@@ -32,7 +33,7 @@ app.post(`/message`,(req,res) => {
     const newMsg = {
         body: req.body.body,
         userHandle: req.body.userHandle,
-        createdAt: admin.firestore.Timestamp.fromDate(new Date())
+        createdAt:  new Date().toISOString()
     }
     admin.firestore()
     .collection('messages')
